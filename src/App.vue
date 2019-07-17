@@ -19,25 +19,60 @@
         text-color="#fff"
         style="padding:5px"
       >
-        <h1 style="color:#FFF;">HIT动漫 - 证件核销系统 - ホン メイリン</h1>
+        <h1 style="color:#FFF;">HITComic - 证件核销系统 - メイリン</h1>
       </el-menu>
     </el-row>
     <el-row justify="center" align="middle">
       <el-col :span="8">
         <el-alert title="入场实时图像捕捉区" type="info" center show-icon></el-alert>
-        <video ref="video" id="video" width="100%" autoplay></video>
+        <video ref="video" id="video" width="320" height="240" autoplay></video>
       </el-col>
       <el-col :span="8">
         <el-alert title="入场照片捕获结果" type="info" center show-icon></el-alert>
+        <canvas ref="canvas" id="canvas" width="320" height="240"></canvas>
       </el-col>
 
       <el-col :span="8">
         <el-alert title="入场照片记录" type="info" center show-icon></el-alert>
       </el-col>
     </el-row>
+    <el-divider></el-divider>
     <el-row justify="center" align="middle" center show-icon>
-      <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">3</el-col>
+      <el-col :span="24">
+        <el-input placeholder="请输入内容" v-model="ticketKey" @keyup.enter.native="getCertInfo()">
+          <template slot="prepend">请选中此处使用扫码枪扫码</template>
+          <el-button slot="append" icon="el-icon-delete" v-on:click="ticketKey = ''"></el-button>
+        </el-input>
+      </el-col>
     </el-row>
+    <el-divider content-position="center">
+      <span style="color:#ccc;">工作人员操作区</span>
+    </el-divider>
+    <el-row justify="center" align="middle" center show-icon>
+      <el-col :span="12">
+        <el-button-group>
+          <el-button type="primary" v-on:click="getCertInfo()">
+            获取
+            <i class="el-icon-sort-down el-icon--right"></i>
+          </el-button>
+          <el-button type="primary" v-on:click="capture()">
+            拍照
+            <i class="el-icon-camera el-icon--right"></i>
+          </el-button>
+          <el-button type="primary">
+            核销
+            <i class="el-icon-finished el-icon--right"></i>
+          </el-button>
+          <el-button type="primary" v-on:click="clearCapture()">
+            清空
+            <i class="el-icon-delete el-icon--right"></i>
+          </el-button>
+        </el-button-group>
+        <p></p>
+      </el-col>
+    </el-row>
+    <el-divider content-position="center">
+    </el-divider>
   </div>
 </template>
 
@@ -54,8 +89,44 @@ export default {
       currentDate: new Date(),
       video: {},
       canvas: {},
-      captures: []
+      captures: [],
+      videoElementHeight: 233,
+      videoElementWidth: 233,
+      certPircture: "",
+      ticketKey: "",
+      ticketKeytmp: "",
+      serverUrl: "http://127.0.0.1:9090"
     };
+  },
+  methods: {
+    capture() {
+      this.canvas = this.$refs.canvas;
+      //var context =
+      this.canvas.getContext("2d").drawImage(this.video, 0, 0, 320, 240);
+      //this.captures.push(this.canvas.toDataURL("image/jpeg"))
+      this.certPircture = this.canvas.toDataURL("image/jpeg");
+    },
+
+    clearCapture() {
+      this.canvas = this.$refs.canvas;
+      this.ctx = this.canvas.getContext("2d");
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+
+    getCertInfo() {
+      window.console.log("成功触发");
+      fetch(`${this.serverUrl}/staff/${this.ticketKey}`)
+        .then(response => response.json())
+        .then(json => {
+          if(json['message'] == 'success'){
+            window.console.log(json)
+          }
+        })
+        .catch(error => {
+          window.console.log("失敗"+error)
+        });
+      this.ticketKey = "";
+    }
   },
   mounted() {
     this.video = this.$refs.video;
@@ -70,6 +141,8 @@ export default {
           this.video.play();
         }
       });
+      this.videoElementHeight = this.$refs.video.offsetHeight;
+      this.videoElementWidth = this.$refs.video.offsetWidth;
     }
   }
 };
@@ -115,5 +188,9 @@ export default {
 
 .clearfix:after {
   clear: both;
+}
+.hit-button {
+  width: 150px;
+  height: 60px;
 }
 </style>
