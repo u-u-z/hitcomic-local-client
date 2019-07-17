@@ -19,7 +19,7 @@
         text-color="#fff"
         style="padding:5px"
       >
-        <h1 style="color:#FFF;">HITComic - 证件核销系统 - メイリン</h1>
+        <h1 style="color:#FFF;">HITComic - 证件核销 - メイリン - 测试版！</h1>
       </el-menu>
     </el-row>
     <el-row justify="center" align="middle">
@@ -70,9 +70,9 @@
         </el-button-group>
         <p></p>
       </el-col>
+      <el-col :span="12"></el-col>
     </el-row>
-    <el-divider content-position="center">
-    </el-divider>
+    <el-divider content-position="center"></el-divider>
   </div>
 </template>
 
@@ -115,18 +115,71 @@ export default {
 
     getCertInfo() {
       window.console.log("成功触发");
+      this.ticketKeytmp = `${this.ticketKey}`
       fetch(`${this.serverUrl}/staff/${this.ticketKey}`)
         .then(response => response.json())
         .then(json => {
-          if(json['message'] == 'success'){
+          window.console.log(json)
+          if (this.notification(json["result"])) {
             window.console.log(json)
+            if(json['quantity'] > 0){
+              window.console.log(json['records'][json['records'].length-1]['Path'])
+            }
+          }else{
+            this.ticketKeytmp = ''
           }
         })
         .catch(error => {
-          window.console.log("失敗"+error)
+          window.console.log("失敗" + error);
         });
       this.ticketKey = "";
-    }
+    },
+
+    /**
+     * 通知类型消息
+     */
+
+    notification(message) {
+      switch (message) {
+        case "success":
+          this.$notify({
+            title: "有效证件",
+            message: "若有照片则显示在右侧",
+            type: "success",
+            duration: 2000
+          });
+          return true
+          
+        case "invalid":
+          this.$notify.error({
+            title: "次数用尽",
+            message: "次数为 0 的证件无法使用"
+          });
+          return false
+          
+        case "fake":
+          this.$notify.error({
+            title: "虚假证件",
+            message: "证件不在数据库中"
+          })
+          return false
+          
+        case "fuckyou":
+          this.$notify.error({
+            title: "这TM是票！",
+            message: "总之你可能进错口了"
+          })
+          return false
+          
+        default:
+          this.$notify.info({
+            title: "未知消息",
+            message: "请联系管理员！错误信息" + message
+          })
+          return false
+      }
+    },
+    GetCertInfoInvalid() {}
   },
   mounted() {
     this.video = this.$refs.video;
