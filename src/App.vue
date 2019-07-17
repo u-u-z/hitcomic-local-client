@@ -34,6 +34,11 @@
 
       <el-col :span="8">
         <el-alert title="入场照片记录" type="info" center show-icon></el-alert>
+        <el-image :src="verifiedPictureUrl" width="320" height="240">
+          <div slot="error" class="image-slot">
+            <i class="el-icon-picture-outline">此处加载图片</i>
+          </div>
+        </el-image>
       </el-col>
     </el-row>
     <el-divider></el-divider>
@@ -95,7 +100,8 @@ export default {
       certPircture: "",
       ticketKey: "",
       ticketKeytmp: "",
-      serverUrl: "http://127.0.0.1:9090"
+      serverUrl: "http://127.0.0.1:9090",
+      verifiedPictureUrl: ""
     };
   },
   methods: {
@@ -111,22 +117,28 @@ export default {
       this.canvas = this.$refs.canvas;
       this.ctx = this.canvas.getContext("2d");
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.verifiedPictureUrl = "";
     },
 
     getCertInfo() {
       window.console.log("成功触发");
-      this.ticketKeytmp = `${this.ticketKey}`
+      this.ticketKeytmp = `${this.ticketKey}`;
       fetch(`${this.serverUrl}/staff/${this.ticketKey}`)
         .then(response => response.json())
         .then(json => {
-          window.console.log(json)
+          window.console.log(json);
           if (this.notification(json["result"])) {
-            window.console.log(json)
-            if(json['quantity'] > 0){
-              window.console.log(json['records'][json['records'].length-1]['Path'])
+            window.console.log(json);
+            if (json["quantity"] > 0) {
+              window.console.log(
+                json["records"][json["records"].length - 1]["Path"]
+              );
+              this.verifiedPictureUrl = `${this.serverUrl}/cert/${
+                json["records"][json["records"].length - 1]["Path"]
+              }.jpg`;
             }
-          }else{
-            this.ticketKeytmp = ''
+          } else {
+            this.ticketKeytmp = "";
           }
         })
         .catch(error => {
@@ -148,35 +160,35 @@ export default {
             type: "success",
             duration: 2000
           });
-          return true
-          
+          return true;
+
         case "invalid":
           this.$notify.error({
             title: "次数用尽",
             message: "次数为 0 的证件无法使用"
           });
-          return false
-          
+          return false;
+
         case "fake":
           this.$notify.error({
             title: "虚假证件",
             message: "证件不在数据库中"
-          })
-          return false
-          
+          });
+          return false;
+
         case "fuckyou":
           this.$notify.error({
             title: "这TM是票！",
             message: "总之你可能进错口了"
-          })
-          return false
-          
+          });
+          return false;
+
         default:
           this.$notify.info({
             title: "未知消息",
             message: "请联系管理员！错误信息" + message
-          })
-          return false
+          });
+          return false;
       }
     },
     GetCertInfoInvalid() {}
