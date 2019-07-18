@@ -180,6 +180,7 @@ export default {
                 type: "success",
                 duration: 2000
               });
+              this.clearCapture();
             } else if (this.notification(json["result"])) {
               this.clearCapture();
             } else {
