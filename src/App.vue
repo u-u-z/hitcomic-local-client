@@ -211,21 +211,21 @@ export default {
 
         case "invalid":
           this.$notify.error({
-            title: "次数用尽",
+            title: "次数用尽 🙅",
             message: "次数为 0 的证件无法使用"
           });
           return false;
 
         case "fake":
           this.$notify.error({
-            title: "虚假证件",
+            title: "虚假证件 🙅‍♂️",
             message: "证件不在数据库中"
           });
           return false;
 
         case "fuckyou":
           this.$notify.error({
-            title: "这TM是票！",
+            title: "这TM是票！😠",
             message: "总之你可能进错口了"
           });
           return false;
