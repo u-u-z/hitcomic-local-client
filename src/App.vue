@@ -44,7 +44,7 @@
     <el-divider></el-divider>
     <el-row justify="center" align="middle" center show-icon>
       <el-col :span="24">
-        <el-input placeholder="请输入内容" v-model="ticketKey" @keyup.enter.native="getCertInfo()">
+        <el-input id="ikey" placeholder="请输入内容" v-model="ticketKey" @keyup.enter.native="getCertInfo()">
           <template slot="prepend">请选中此处使用扫码枪扫码</template>
           <el-button slot="append" icon="el-icon-delete" v-on:click="ticketKey = ''"></el-button>
         </el-input>
@@ -79,7 +79,7 @@
         <p v-if="ticketKeytmp">当前操作的证件：{{ticketKeytmp}}</p>
       </el-col>
     </el-row>
-    <el-divider content-position="center"></el-divider>
+    <el-divider content-position="center"> <span style="color:#ccc;">作者：蕾咪io 13093886624</span></el-divider>
   </div>
 </template>
 
@@ -114,6 +114,7 @@ export default {
       this.canvas.getContext("2d").drawImage(this.video, 0, 0, 320, 240);
       //this.captures.push(this.canvas.toDataURL("image/jpeg"))
       this.certPircture = this.canvas.toDataURL("image/jpeg");
+      this.focusOnInput()
     },
 
     clearCapture() {
@@ -122,6 +123,7 @@ export default {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.verifiedPictureUrl = "";
       this.ticketKeytmp = "";
+      this.focusOnInput()
     },
 
     getCertInfo() {
@@ -151,6 +153,7 @@ export default {
           window.console.log("失敗" + error);
         });
       this.ticketKey = "";
+      this.focusOnInput()
     },
 
     verifyPost() {
@@ -164,6 +167,7 @@ export default {
             title: "请采集照片",
             message: "您好像忘记了采集照片！"
           });
+          this.focusOnInput()
           return;
         }
         fetch(`${this.serverUrl}/staff/${this.ticketKeytmp}`, {
@@ -180,12 +184,14 @@ export default {
                 type: "success",
                 duration: 2000
               });
-              this.clearCapture();
+              
             } else if (this.notification(json["result"])) {
-              this.clearCapture();
+              window.console.log("没有核销成功!")
             } else {
               this.ticketKey = "";
             }
+            this.clearCapture();
+            this.focusOnInput()
           })
           .catch(error => {
             window.console.log("失敗" + error);
@@ -207,6 +213,7 @@ export default {
             type: "success",
             duration: 2000
           });
+          this.focusOnInput()
           return true;
 
         case "invalid":
@@ -214,6 +221,7 @@ export default {
             title: "次数用尽 🙅",
             message: "次数为 0 的证件无法使用"
           });
+          this.focusOnInput()
           return false;
 
         case "fake":
@@ -221,6 +229,7 @@ export default {
             title: "虚假证件 🙅‍♂️",
             message: "证件不在数据库中"
           });
+          this.focusOnInput()
           return false;
 
         case "fuckyou":
@@ -228,6 +237,7 @@ export default {
             title: "这TM是票！😠",
             message: "总之你可能进错口了"
           });
+          this.focusOnInput()
           return false;
 
         default:
@@ -235,11 +245,16 @@ export default {
             title: "未知消息",
             message: "请联系管理员！错误信息" + message
           });
+          this.focusOnInput()
           return false;
       }
     },
     deepClone(source) {
       return JSON.parse(JSON.stringify(source));
+    },
+    focusOnInput(){
+      let importantInput = window.document.getElementById('ikey')
+      importantInput.focus()
     }
   },
   mounted() {
@@ -257,6 +272,7 @@ export default {
       });
       this.videoElementHeight = this.$refs.video.offsetHeight;
       this.videoElementWidth = this.$refs.video.offsetWidth;
+      this.focusOnInput()
     }
   }
 };
