@@ -34,7 +34,7 @@
 
       <el-col :span="8">
         <el-alert title="入场照片记录" type="info" center show-icon></el-alert>
-        <el-image :src="verifiedPictureUrl" width="320" height="240">
+        <el-image :src="verifiedPictureUrl" width="320px" height="240px">
           <div slot="error" class="image-slot">
             <i class="el-icon-picture-outline">此处加载图片</i>
           </div>
@@ -64,7 +64,7 @@
             拍照
             <i class="el-icon-camera el-icon--right"></i>
           </el-button>
-          <el-button type="primary">
+          <el-button type="primary" v-on:click="verifyPost()">
             核销
             <i class="el-icon-finished el-icon--right"></i>
           </el-button>
@@ -75,7 +75,9 @@
         </el-button-group>
         <p></p>
       </el-col>
-      <el-col :span="12"></el-col>
+      <el-col :span="12">
+        <p v-if="ticketKeytmp">当前操作的证件：{{ticketKeytmp}}</p>
+      </el-col>
     </el-row>
     <el-divider content-position="center"></el-divider>
   </div>
@@ -101,7 +103,8 @@ export default {
       ticketKey: "",
       ticketKeytmp: "",
       serverUrl: "http://127.0.0.1:9090",
-      verifiedPictureUrl: ""
+      verifiedPictureUrl: "",
+      certPirctureBlob: ""
     };
   },
   methods: {
@@ -118,11 +121,12 @@ export default {
       this.ctx = this.canvas.getContext("2d");
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.verifiedPictureUrl = "";
+      this.ticketKeytmp = "";
     },
 
     getCertInfo() {
       window.console.log("成功触发");
-      this.ticketKeytmp = `${this.ticketKey}`;
+      this.ticketKeytmp = this.deepClone(this.ticketKey);
       fetch(`${this.serverUrl}/staff/${this.ticketKey}`)
         .then(response => response.json())
         .then(json => {
@@ -136,6 +140,8 @@ export default {
               this.verifiedPictureUrl = `${this.serverUrl}/cert/${
                 json["records"][json["records"].length - 1]["Path"]
               }.jpg`;
+            } else {
+              this.verifiedPictureUrl = ``;
             }
           } else {
             this.ticketKeytmp = "";
@@ -147,6 +153,46 @@ export default {
       this.ticketKey = "";
     },
 
+    verifyPost() {
+      this.canvas = this.$refs.canvas;
+      this.canvas.toBlob(blob => {
+        let formdata = new FormData();
+        formdata.append("picture", blob);
+        window.console.log(blob);
+        if (blob.size < 1000) {
+          this.$notify.error({
+            title: "请采集照片",
+            message: "您好像忘记了采集照片！"
+          });
+          return;
+        }
+        fetch(`${this.serverUrl}/staff/${this.ticketKeytmp}`, {
+          method: "POST",
+          body: formdata
+        })
+          .then(response => response.json())
+          .then(json => {
+            window.console.log(json);
+            if (json["result"] == "success") {
+              this.$notify({
+                title: "核销完成！✅",
+                message: "有请下一位",
+                type: "success",
+                duration: 2000
+              });
+            } else if (this.notification(json["result"])) {
+              this.clearCapture();
+            } else {
+              this.ticketKey = "";
+            }
+          })
+          .catch(error => {
+            window.console.log("失敗" + error);
+          });
+      }, "image/jpeg");
+
+      //this.clearCapture();
+    },
     /**
      * 通知类型消息
      */
@@ -191,7 +237,9 @@ export default {
           return false;
       }
     },
-    GetCertInfoInvalid() {}
+    deepClone(source) {
+      return JSON.parse(JSON.stringify(source));
+    }
   },
   mounted() {
     this.video = this.$refs.video;
